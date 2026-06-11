@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Permessi Anticipati per Classe</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #f8f7f4;
+    color: #2c2c2a;
+    padding: 40px 32px 60px;
+    min-height: 100vh;
+  }
+
+  header {
+    margin-bottom: 32px;
+  }
+  .tag {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #888780;
+    margin-bottom: 10px;
+  }
+  h1 {
+    font-size: clamp(20px, 3vw, 30px);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: #1a1a18;
+    margin-bottom: 8px;
+  }
+  .subtitle {
+    font-size: 14px;
+    color: #888780;
+    line-height: 1.5;
+  }
+
+  .stats-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+  }
+  .stat-box {
+    background: white;
+    border: 1px solid #e5e3de;
+    border-radius: 10px;
+    padding: 14px 20px;
+    min-width: 140px;
+  }
+  .stat-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #888780;
+    margin-bottom: 4px;
+  }
+  .stat-value {
+    font-size: 22px;
+    font-weight: 600;
+    color: #1a1a18;
+    letter-spacing: -0.02em;
+  }
+  .stat-value.high { color: #c0392b; }
+  .stat-value.mid  { color: #e67e22; }
+  .stat-value.low  { color: #27ae60; }
+
+  .chart-wrap {
+    background: white;
+    border: 1px solid #e5e3de;
+    border-radius: 14px;
+    padding: 28px 24px 20px;
+    overflow-x: auto;
+  }
+
+  .chart-container {
+    min-width: 900px;
+    height: 420px;
+    position: relative;
+  }
+
+  .legend-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #ece9e2;
+  }
+  .leg {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #666;
+  }
+  .leg-dot {
+    width: 12px; height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  footer {
+    margin-top: 24px;
+    font-size: 12px;
+    color: #aaa;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="tag">Analisi presenze — Anno scolastico corrente</div>
+  <h1>Permessi di entrata posticipata per classe</h1>
+  <p class="subtitle">Percentuale di alunni che hanno usufruito di permessi di entrata posticipata, sul totale degli alunni per classe.<br>La barra trasparente indica il 100% degli alunni di ciascuna classe.</p>
+</header>
+
+<div class="stats-row">
+  <div class="stat-box">
+    <div class="stat-label">Percentuale richieste 
+      <br>sul totale degli studenti</div>
+    <div class="stat-value mid" id="avg">—</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-label">Classi oltre 40%</div>
+    <div class="stat-value high" id="above40">—</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-label">Classi oltre 30%</div>
+    <div class="stat-value mid" id="above30">—</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-label">Classe con più permessi</div>
+    <div class="stat-value high" id="maxClass">—</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-label">Classe con meno permessi</div>
+    <div class="stat-value low" id="minClass">—</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-label">Totale classi</div>
+    <div class="stat-value" id="totalClasses">—</div>
+  </div>
+</div>
+
+<div class="chart-wrap">
+  <div class="chart-container">
+    <canvas id="chart"></canvas>
+  </div>
+  <div class="legend-row">
+    <div class="leg"><div class="leg-dot" style="background:rgba(192,57,43,0.85)"></div> Oltre 40% — attenzione</div>
+    <div class="leg"><div class="leg-dot" style="background:rgba(230,126,34,0.85)"></div> 30–40% — nella media</div>
+    <div class="leg"><div class="leg-dot" style="background:rgba(39,174,96,0.85)"></div> Sotto 30% — contenuto</div>
+    <div class="leg"><div class="leg-dot" style="background:rgba(180,180,180,0.25); border:1px solid #ccc"></div> Riferimento 70%</div>
+  </div>
+</div>
+
+<footer>Fonte: foglio "Presenze per Classe" — dati permessi di entrata posticipata.</footer>
+
+<script>
+const raw = [
+  ["1AE",42.3],["2AE",11.5],["1AI",48.0],["2AI",10.0],["3AI",26.3],
+  ["4AI",15.0],["5AI",28.0],["1AM",43.5],["2AM",27.8],["3AM",13.6],
+  ["4AM",33.3],["5AM",52.6],["1As",33.3],["2As",20.8],["3As",8.3],
+  ["4As",13.0],["5As",5.9],["3AT",28.6],["4AT",33.3],["5At",26.7],
+  ["3AU",40.0],["4AU",18.2],["5AU",40.0],["1BI",21.4],["2BI",10.5],
+  ["3BI",47.4],["4BI",16.7],["5BI",6.2],["1BM",32.0],["2BM",35.3],
+  ["3BM",47.6],["4BM",47.8],["5BM",47.1],["1BS",36.0],["2BS",44.4],
+  ["3BS",8.3],["4BS",25.0],["5BS",33.3],["3BU",42.1],["1CI",23.1],
+  ["2CI",30.0],["3CI",25.0],["4CI",40.0],["5CI",31.8],["1CM",65.4],
+  ["2CM",47.6],["3CM",40.0],["4CM",5.3],["3CS",31.8],["5CS",11.1],
+  ["1DI",44.4],["2DI",23.8],["3DI",37.0],["4DI",11.1],["5DI",38.1]
+];
+
+const labels = raw.map(d => d[0]);
+const values = raw.map(d => d[1]);
+
+// Color per bar
+const barColors = values.map(v =>
+  v >= 40 ? 'rgba(192,57,43,0.85)' :
+  v >= 30 ? 'rgba(230,126,34,0.85)' :
+            'rgba(39,174,96,0.85)'
+);
+const borderColors = values.map(v =>
+  v >= 40 ? 'rgba(160,40,30,1)' :
+  v >= 30 ? 'rgba(200,100,20,1)' :
+            'rgba(30,140,70,1)'
+);
+
+// Stats
+const avg = (values.reduce((a,b)=>a+b,0)/values.length).toFixed(1);
+const above40 = values.filter(v=>v>=40).length;
+const above30 = values.filter(v=>v>=30).length;
+const maxI = values.indexOf(Math.max(...values));
+const minI = values.indexOf(Math.min(...values));
+document.getElementById('avg').textContent = avg + '%';
+document.getElementById('above40').textContent = above40 + ' classi';
+document.getElementById('above30').textContent = above30 + ' classi';
+document.getElementById('maxClass').textContent = labels[maxI] + ' (' + values[maxI] + '%)';
+document.getElementById('minClass').textContent = labels[minI] + ' (' + values[minI] + '%)';
+document.getElementById('totalClasses').textContent = labels.length;
+
+const ctx = document.getElementById('chart').getContext('2d');
+
+new Chart(ctx, {
+  data: {
+    labels,
+    datasets: [
+      {
+        // 100% background bars
+        type: 'bar',
+        label: '100% alunni',
+        data: new Array(labels.length).fill(70),
+        backgroundColor: 'rgba(200,200,200,0.18)',
+        borderColor: 'rgba(180,180,180,0.35)',
+        borderWidth: 1,
+        borderRadius: 4,
+        order: 2,
+      },
+      {
+        // Actual percentage bars
+        type: 'bar',
+        label: '% permessi',
+        data: values,
+        backgroundColor: barColors,
+        borderColor: borderColors,
+        borderWidth: 1.5,
+        borderRadius: 4,
+        order: 1,
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: (ctx) => {
+            if (ctx.datasetIndex === 1) return ` Permessi: ${ctx.parsed.y}%`;
+            return null;
+          },
+          title: (items) => `Classe ${items[0].label}`
+        },
+        backgroundColor: '#1a1a18',
+        titleFont: { size: 13, weight: '600' },
+        bodyFont: { size: 12 },
+        padding: 10,
+        cornerRadius: 8,
+      }
+    },
+    scales: {
+      x: {
+        grid: { display: false },
+        ticks: {
+          font: { size: 10.5, family: 'DM Sans' },
+          color: '#555',
+          maxRotation: 45,
+          minRotation: 45,
+        },
+        border: { color: '#ddd' }
+      },
+      y: {
+        min: 0,
+        max: 70,
+        grid: {
+          color: (ctx) => ctx.tick.value === 40 ? 'rgba(192,57,43,0.3)' : ctx.tick.value === 30 ? 'rgba(230,126,34,0.3)' : 'rgba(0,0,0,0.06)',
+          lineWidth: (ctx) => (ctx.tick.value === 40 || ctx.tick.value === 30) ? 1.5 : 1,
+        },
+        ticks: {
+          callback: v => v + '%',
+          font: { size: 12, family: 'DM Sans' },
+          color: '#777',
+          stepSize: 10,
+        },
+        border: { color: '#ddd' }
+      }
+    },
+    animation: {
+      duration: 600,
+      easing: 'easeOutQuart'
+    }
+  }
+});
+</script>
+</body>
+</html>
