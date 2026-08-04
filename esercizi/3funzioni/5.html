@@ -6,7 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://www.geogebra.org/apps/deployggb.js"></script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>    
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="stylesheet" href="../../css/style.css">
     <script src="../../js/motoreNavigazioneSchede.js" defer></script>
     <script src="../argomenti.js"></script>
@@ -21,6 +21,31 @@
     </h1>
 
     <br>
+
+    <div class="geogebra-container">
+        <div id="geogebra2"></div>
+    </div>
+    <script>
+        let ggbApp2 = new GGBApplet({
+            "appName": "classic",
+            "id": "gg1",
+            "scaleContainerClass": "geogebra-container",
+            "showToolBar": false,
+            "showAlgebraInput": false,
+            "showMenuBar": false,
+            "enableShiftDragZoom": false,
+            "filename": "img/graficoFunzione.ggb"
+        },
+            true);
+
+        window.addEventListener("load", function () {
+            ggbApp2.inject('geogebra2');
+        });
+    </script>
+
+    <br>
+    <br>
+    
 
 
     <h3 class="green">Esercizio 1</h3>
@@ -146,7 +171,7 @@
                 api.registerObjectUpdateListener("A","stampaValori2");
             }, */
             "appName": "classic",
-            "id": "gg1",            
+            "id": "gg1",
             "scaleContainerClass": "geogebra-container",
             "showToolBar": false,
             "showAlgebraInput": false,
