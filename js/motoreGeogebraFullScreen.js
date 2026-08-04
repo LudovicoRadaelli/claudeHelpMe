@@ -6,6 +6,8 @@
  *
  * - Inietta da solo il CSS necessario (nessuna modifica a style.css).
  * - Crea da solo bottone e messaggio (nessuna modifica all'HTML).
+ * - Il pulsante sta SOTTO il widget nella vista normale, e passa in
+ *   un angolo solo quando si e' a schermo intero (dove c'e' spazio).
  * - In fullscreen prova a bloccare l'orientamento in orizzontale
  *   (funziona su Android); dove non e' supportato (iOS/Safari)
  *   mostra l'invito a ruotare il dispositivo.
@@ -28,8 +30,9 @@
   var css = [
     ".geogebra-container { position: relative; }",
 
+    // bottone: nel flusso normale, centrato SOTTO il widget
     ".ggb-fs-btn {",
-    "  position: absolute; top: 8px; right: 8px; z-index: 5;",
+    "  position: absolute; bottom: 4px; right: 4px; z-index: 2147483647;",
     "  padding: 6px 10px; font: inherit; font-size: 0.85rem;",
     "  line-height: 1; cursor: pointer;",
     "  border: 1px solid rgba(0,0,0,0.2); border-radius: 6px;",
@@ -38,7 +41,7 @@
     ".ggb-fs-btn:hover { background: #fff; }",
 
     ".ggb-rotate-hint {",
-    "  display: none; position: absolute; inset: 0; z-index: 10;",
+    "  display: none; position: absolute; inset: 0; z-index: 2147483647;",
     "  align-items: center; justify-content: center;",
     "  text-align: center; padding: 1rem;",
     "  background: #fff; font-size: 1.3rem;",
@@ -108,7 +111,7 @@
     var buttons = document.querySelectorAll(".ggb-fs-btn");
     for (var i = 0; i < buttons.length; i++) {
       var inFs = fs && fs.contains(buttons[i]);
-      buttons[i].textContent = inFs ? "\u2715 Esci" : "\u26F6 Schermo intero";
+      buttons[i].textContent = inFs ? "\u2715" : "\u26F6";
     }
   }
   document.addEventListener("fullscreenchange", onFsChange);
@@ -122,7 +125,7 @@
     var btn = document.createElement("button");
     btn.type = "button";
     btn.className = "ggb-fs-btn";
-    btn.textContent = "\u26F6 Schermo intero";
+    btn.textContent = "\u26F6";
     btn.addEventListener("click", function () { toggleFullscreen(container); });
 
     var hint = document.createElement("div");
