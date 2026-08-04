@@ -31,10 +31,10 @@
 function showHint(i) {
     
     //creo un array con tutti gli elementi button della pagina
-    listaButton = document.getElementsByTagName(`button`);
+    const listaButton = document.querySelectorAll(`button`);
 
     //per ogni elemento button dell'array 
-    listaButton.forEach(elm => {
+    document.querySelectorAll(`.slide-container`).forEach(elm => {
         //se id="hint**********-button"         
         if(/^hint.{10}-button$/.test(elm.id)) {            
             //allora rendo visibile il button
