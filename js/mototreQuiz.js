@@ -50,9 +50,7 @@
     </ul>
   </div>
 
-</div>
-
-*/
+</div>*/
 
 
 
@@ -82,6 +80,8 @@
        se le domande sono più di una, vengono mostrate anche la
        percentuale di risposte corrette al primo tentativo e la
        lista delle domande sbagliate.
+       Con una sola domanda il quiz termina mostrando il feedback,
+       senza pulsante "Concludi" né schermata finale.
 
    Marcatura da usare nelle schede:
 
@@ -314,6 +314,7 @@
     this.domande = this.leggiDomande();
     if (!this.domande.length) return;
 
+    this.multipla = this.domande.length > 1;   /* header e barra solo se multipla */
     this.domandeErrate = {};   /* indici (0-based) con almeno un errore */
     this.indice = 0;
     this.costruisci();
@@ -346,20 +347,26 @@
     this.root.innerHTML = "";
     this.root.classList.add("quiz-attivo");
 
-    var header = document.createElement("div");
-    header.className = "quiz-header";
+    if (this.multipla) {
+      var header = document.createElement("div");
+      header.className = "quiz-header";
 
-    this.contatoreEl = document.createElement("span");
-    this.contatoreEl.className = "quiz-contatore";
-    header.appendChild(this.contatoreEl);
-    this.root.appendChild(header);
+      this.contatoreEl = document.createElement("span");
+      this.contatoreEl.className = "quiz-contatore";
+      header.appendChild(this.contatoreEl);
+      this.root.appendChild(header);
 
-    var barra = document.createElement("div");
-    barra.className = "quiz-barra";
-    this.barraEl = document.createElement("div");
-    this.barraEl.className = "quiz-barra-riempimento";
-    barra.appendChild(this.barraEl);
-    this.root.appendChild(barra);
+      var barra = document.createElement("div");
+      barra.className = "quiz-barra";
+      this.barraEl = document.createElement("div");
+      this.barraEl.className = "quiz-barra-riempimento";
+      barra.appendChild(this.barraEl);
+      this.root.appendChild(barra);
+    } else {
+      /* Domanda unica: niente contatore, niente barra. */
+      this.contatoreEl = null;
+      this.barraEl = null;
+    }
 
     this.corpoWrap = document.createElement("div");
     this.root.appendChild(this.corpoWrap);
@@ -371,7 +378,9 @@
     var d = this.domande[i];
     var ultima = (i === this.domande.length - 1);
 
-    this.contatoreEl.textContent = "Domanda " + (i + 1) + " di " + this.domande.length;
+    if (this.contatoreEl) {
+      this.contatoreEl.textContent = "Domanda " + (i + 1) + " di " + this.domande.length;
+    }
     this.aggiornaBarra(i / this.domande.length);
 
     var corpo = document.createElement("div");
@@ -410,22 +419,27 @@
     corpo.appendChild(fb);
     this.feedbackEl = fb;
 
-    var azioni = document.createElement("div");
-    azioni.className = "quiz-azioni";
-    var avanti = document.createElement("button");
-    avanti.type = "button";
-    avanti.className = "quiz-avanti";
-    avanti.innerHTML = ultima
-      ? 'Concludi <span aria-hidden="true">&#10003;</span>'
-      : 'Avanti <span aria-hidden="true">&rarr;</span>';
-    avanti.style.display = "none";
-    avanti.addEventListener("click", function () {
-      if (ultima) self.mostraFine();
-      else        self.mostraDomanda(i + 1);
-    });
-    azioni.appendChild(avanti);
-    corpo.appendChild(azioni);
-    this.avantiEl = avanti;
+    if (this.domande.length > 1) {
+      var azioni = document.createElement("div");
+      azioni.className = "quiz-azioni";
+      var avanti = document.createElement("button");
+      avanti.type = "button";
+      avanti.className = "quiz-avanti";
+      avanti.innerHTML = ultima
+        ? 'Concludi <span aria-hidden="true">&#10003;</span>'
+        : 'Avanti <span aria-hidden="true">&rarr;</span>';
+      avanti.style.display = "none";
+      avanti.addEventListener("click", function () {
+        if (ultima) self.mostraFine();
+        else        self.mostraDomanda(i + 1);
+      });
+      azioni.appendChild(avanti);
+      corpo.appendChild(azioni);
+      this.avantiEl = avanti;
+    } else {
+      /* Quiz con una sola domanda: nessun pulsante, nessuna schermata finale. */
+      this.avantiEl = null;
+    }
 
     this.corpoWrap.innerHTML = "";
     this.corpoWrap.appendChild(corpo);
@@ -442,8 +456,10 @@
 
       this.mostraFeedback(opz.feedback || DEFAULT_CORRETTO, "ok");
       this.aggiornaBarra((this.indice + 1) / this.domande.length);
-      this.avantiEl.style.display = "inline-flex";
-      this.avantiEl.focus();
+      if (this.avantiEl) {
+        this.avantiEl.style.display = "inline-flex";
+        this.avantiEl.focus();
+      }
     } else {
       this.domandeErrate[this.indice] = true;   /* registra l'errore */
       btn.classList.add("sbagliata");
@@ -460,6 +476,7 @@
   };
 
   Quiz.prototype.aggiornaBarra = function (frazione) {
+    if (!this.barraEl) return;
     var f = Math.max(0, Math.min(1, frazione));
     this.barraEl.style.width = (f * 100) + "%";
   };
@@ -536,6 +553,3 @@
 
   window.Quiz = Quiz;
 })();
-
-
-
